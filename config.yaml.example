@@ -1,0 +1,93 @@
+# Obsidian Agent Configuration
+
+# ============================================================
+# VAULT CONFIGURATION
+# ============================================================
+vault:
+  # Absolute path to your Obsidian vault
+  path: /path/to/your/obsidian/vault
+  
+  # Folders to index (leave empty for all)
+  indexed_folders: []
+  # Example:
+  # indexed_folders:
+  #   - School/Notes/AI
+  #   - Oncology
+  #   - Reading
+
+# ============================================================
+# MODEL CONFIGURATION
+# ============================================================
+model:
+  provider: ollama
+  
+  ollama:
+    model: qwen2.5:3b
+    base_url: http://localhost:11434
+  
+  # Generation parameters
+  temperature: 0.0
+  num_ctx: 4096
+  max_tokens: 2048
+
+# ============================================================
+# AGENT CONFIGURATION
+# ============================================================
+agent:
+  # Maximum number of tool calls per query
+  max_iterations: 10
+  
+  # Enable verbose logging of agent decisions
+  verbose: false
+  
+  # Timeout for agent execution (seconds)
+  timeout: 120
+
+# ============================================================
+# MODULES CONFIGURATION
+# ============================================================
+modules:
+  # Retrieval module (documentary search)
+  retrieval:
+    enabled: true
+    max_results: 15
+    max_file_lines: 80
+    search_depth: unlimited  # or number of subdirectories
+  
+  # Memory module (future)
+  # TODO
+
+  # Reasoning module (future)
+  # TODO
+
+# ============================================================
+# LOGGING CONFIGURATION
+# ============================================================
+logging:
+  # Level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: INFO
+  
+  # Log to file
+  file:
+    enabled: false
+    path: logs/agent.log
+    max_size_mb: 10
+    backup_count: 3
+  
+  # Console output
+  console:
+    enabled: true
+    colorized: true
+
+# ============================================================
+# TOOLS CONFIGURATION
+# ============================================================
+tools:
+  # Filesystem tools
+  filesystem:
+    max_folder_items: 30
+    max_search_results: 15
+    max_grep_results: 10
+    
+  # Future tools
+  # TODO

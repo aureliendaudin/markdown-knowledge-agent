@@ -1,0 +1,25 @@
+# Configuration (contains sensitive paths)
+config.yaml
+
+# Environment
+venv/
+env/
+*.pyc
+__pycache__/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
+logs/
+
+# Cache
+.cache/
+
+# Python
+*.egg-info/
+dist/
+build/
