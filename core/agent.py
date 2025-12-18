@@ -5,7 +5,7 @@ from langchain_ollama import ChatOllama
 from langchain.agents import create_agent
 from config import settings
 from tools import get_all_tools
-from modules import RetrievalModule, MemoryModule, PlannerExecutorModule
+from modules import RetrievalModule, PlannerExecutorModule, MemoryModule
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ class ObsidianAgent:
                 tools=self.tools,
                 config=settings.modules.planning.model_dump()
             )
-
+        # Memory module
         if settings.modules.memory.enabled:
             modules["memory"] = MemoryModule(
                 config=settings.modules.memory.model_dump()
@@ -115,6 +115,7 @@ class ObsidianAgent:
                 logs.append(f"⏭️ Module '{name}': Skipped (Disabled)")
         
         # Invoke agent
+        # Invoke agent
         messages = []
         
         # Use context from state if available (populated by MemoryModule.process)
@@ -130,15 +131,11 @@ class ObsidianAgent:
                 messages.extend(self.modules["memory"].get_history())
             
         messages.append({"role": "user", "content": question})
-        
-        logs.append(f"🤖 Agent: Generating response with {len(messages)} context messages")
-        
         response = self.agent.invoke({
             "messages": messages
         })
         
         answer = response["messages"][-1].content
-        
         # Update memory
         is_memory_enabled = False
         if "memory" in self.modules:
