@@ -50,13 +50,18 @@ class RetrievalModuleConfig(BaseModel):
     max_file_lines: int = 80
     search_depth: str | int = "unlimited"
 
-    # TODO: Add more retrieval settings in future
+
+class MemoryModuleConfig(BaseModel):
+    """Memory module configuration."""
+    enabled: bool = True
+    max_history: int = 10
+    strategy: Literal["buffer", "summary"] = "buffer"
 
 
 class ModulesConfig(BaseModel):
     """Modules configuration."""
     retrieval: RetrievalModuleConfig = Field(default_factory=RetrievalModuleConfig)
-    # TODO: Add memory and reasoning module configs in future
+    memory: MemoryModuleConfig = Field(default_factory=MemoryModuleConfig)
 
 
 class LogFileConfig(BaseModel):

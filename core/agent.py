@@ -5,7 +5,7 @@ from langchain_ollama import ChatOllama
 from langchain.agents import create_agent
 from config import settings
 from tools import get_all_tools
-from modules import RetrievalModule
+from modules import RetrievalModule, MemoryModule
 
 logger = logging.getLogger(__name__)
 
@@ -42,11 +42,10 @@ class ObsidianAgent:
                 config=settings.modules.retrieval.model_dump()
             )
         
-        # Future modules
-        # if settings.modules.memory.enabled:
-        #     modules["memory"] = MemoryModule(
-        #         config=settings.modules.memory.model_dump()
-        #     )
+        if settings.modules.memory.enabled:
+            modules["memory"] = MemoryModule(
+                config=settings.modules.memory.model_dump()
+            )
         
         for name, module in modules.items():
             module.initialize()
@@ -75,11 +74,26 @@ class ObsidianAgent:
                 state = module.process(state)
         
         # Invoke agent
+        # Invoke agent
+        messages = []
+        
+        # Use context from state if available (populated by MemoryModule.process)
+        if "memory_context" in state:
+            messages.extend(state["memory_context"])
+        elif "memory" in self.modules and self.modules["memory"].enabled:
+            messages.extend(self.modules["memory"].get_history())
+            
+        messages.append({"role": "user", "content": question})
+        
         response = self.agent.invoke({
-            "messages": [{"role": "user", "content": question}]
+            "messages": messages
         })
         
         answer = response["messages"][-1].content
-        logger.info(f"Answer generated ({len(answer)} chars)")
         
+        # Update memory
+        if "memory" in self.modules and self.modules["memory"].enabled:
+            self.modules["memory"].update(question, answer)
+            
+        logger.info(f"Answer generated ({len(answer)} chars)")
         return answer
