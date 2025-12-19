@@ -5,7 +5,7 @@ from langchain_ollama import ChatOllama
 from langchain.agents import create_agent
 from config import settings
 from tools import get_all_tools
-from modules import RetrievalModule, MemoryModule
+from modules import RetrievalModule, MemoryModule, PlannerExecutorModule
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +42,14 @@ class ObsidianAgent:
                 config=settings.modules.retrieval.model_dump()
             )
         
+        # Planning module (Planner-Executor pattern)
+        if settings.modules.planning.enabled:
+            modules["planning"] = PlannerExecutorModule(
+                model=self.model,
+                tools=self.tools,
+                config=settings.modules.planning.model_dump()
+            )
+
         if settings.modules.memory.enabled:
             modules["memory"] = MemoryModule(
                 config=settings.modules.memory.model_dump()
@@ -75,9 +83,23 @@ class ObsidianAgent:
         logger.info(f"Question: {question}")
         logs = []
         
-        # Process through modules
+        # If planning module is enabled, use Planner-Executor pattern
+        if "planning" in self.modules and self.modules["planning"].enabled:
+            logger.info("Using Planner-Executor mode")
+            state = {"question": question}
+            state = self.modules["planning"].process(state)
+            answer = state.get("answer", "No answer generated")
+            logger.info(f"Answer generated ({len(answer)} chars)")
+            return answer
+        
+        # Otherwise, use standard workflow
+        logger.info("Using standard mode")
         state = {"question": question}
         for name, module in self.modules.items():
+            # Skip planning module here as it's handled separately above
+            if name == "planning":
+                continue
+
             # Check if module is enabled globally AND in this request
             is_enabled = module.enabled
             if active_modules and name in active_modules:
