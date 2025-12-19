@@ -86,11 +86,15 @@ class ObsidianAgent:
         # If planning module is enabled, use Planner-Executor pattern
         if "planning" in self.modules and self.modules["planning"].enabled:
             logger.info("Using Planner-Executor mode")
+            logs.append("🧠 Strategy: Planner-Executor Mode")
             state = {"question": question}
             state = self.modules["planning"].process(state)
             answer = state.get("answer", "No answer generated")
             logger.info(f"Answer generated ({len(answer)} chars)")
-            return answer
+            return {
+                "answer": answer,
+                "logs": logs
+            }
         
         # Otherwise, use standard workflow
         logger.info("Using standard mode")
@@ -115,7 +119,6 @@ class ObsidianAgent:
                 logs.append(f"⏭️ Module '{name}': Skipped (Disabled)")
         
         # Invoke agent
-        # Invoke agent
         messages = []
         
         # Use context from state if available (populated by MemoryModule.process)
@@ -131,6 +134,7 @@ class ObsidianAgent:
                 messages.extend(self.modules["memory"].get_history())
             
         messages.append({"role": "user", "content": question})
+        logs.append(f"🤖 Agent: Generating response with {len(messages)} context messages")
         response = self.agent.invoke({
             "messages": messages
         })

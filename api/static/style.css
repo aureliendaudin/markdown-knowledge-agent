@@ -32,7 +32,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
-    box-shadow: 0 0 20px rgba(0,0,0,0.05);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
 }
 
 .main-content {
@@ -259,7 +259,7 @@ button:disabled {
 .tab-btn.active {
     background-color: white;
     color: var(--primary-color);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .tab-content {
@@ -370,7 +370,7 @@ button:disabled {
 }
 
 .message.bot .content code {
-    background-color: rgba(0,0,0,0.1);
+    background-color: rgba(0, 0, 0, 0.1);
     padding: 0.2rem 0.4rem;
     border-radius: 0.25rem;
     font-family: monospace;
@@ -400,7 +400,7 @@ button:disabled {
     background: white;
     padding: 0.5rem;
     border-radius: 0.5rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 #mynetwork {
@@ -409,14 +409,21 @@ button:disabled {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Memory Context Styles */
 .memory-context {
     margin-top: 0.75rem;
-    border-top: 1px solid rgba(255,255,255,0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     padding-top: 0.5rem;
     font-size: 0.85rem;
 }
@@ -438,7 +445,7 @@ button:disabled {
 
 .context-details {
     margin-top: 0.5rem;
-    background-color: rgba(0,0,0,0.2);
+    background-color: rgba(0, 0, 0, 0.2);
     border-radius: 0.25rem;
     overflow: hidden;
 }

@@ -66,7 +66,6 @@ async def get_memory():
     if not agent:
         raise HTTPException(status_code=503, detail="Agent not initialized")
     return agent.get_memory_state()
-
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """Chat with the agent."""
@@ -98,6 +97,7 @@ async def chat(request: ChatRequest):
             processing_time=processing_time,
             logs=logs,
             full_prompt=full_prompt
+        )
         )
     except Exception as e:
         logger.error(f"Error processing request: {e}")
