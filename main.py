@@ -51,25 +51,31 @@ def main():
     # Interactive loop
     while True:
         try:
-            question = input("\n💬 Question (ou 'quit'): ")
-            
-            if question.lower() in ['quit', 'exit', 'q']:
-                print("👋 Au revoir!")
-                break
-            
-            if not question.strip():
+            question = input("\n❓ Vous: ").strip()
+            if not question:
                 continue
+            if question.lower() in ['exit', 'quit', 'q']:
+                break
+                
+            result = agent.ask(question)
             
-            print("\n🔍 Recherche...\n")
-            answer = agent.ask(question)
-            print(answer)
-            print("\n" + "-"*60)
+            if isinstance(result, dict):
+                answer = result["answer"]
+                # Optionally print logs in CLI
+                # for log in result["logs"]:
+                #     print(f"  [LOG] {log}")
+            else:
+                answer = result
+                
+            print(f"\n🤖 Agent: {answer}")
+            print("\n" + "-"*40)
             
         except KeyboardInterrupt:
-            print("\n\n👋 Au revoir!")
+            print("\n👋 Au revoir!")
             break
         except Exception as e:
             print(f"\n❌ Erreur: {e}")
+    
             if settings.logging.level == "DEBUG":
                 import traceback
                 traceback.print_exc()

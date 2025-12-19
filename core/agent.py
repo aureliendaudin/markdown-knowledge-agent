@@ -63,17 +63,21 @@ class ObsidianAgent:
             system_prompt=system_prompt
         )
     
-    def ask(self, question: str) -> str:
+    def ask(self, question: str) -> dict[str, Any]:
         """Ask a question to the agent."""
         logger.info(f"Question: {question}")
+        logs = []
         
         # Process through modules
         state = {"question": question}
-        for module in self.modules.values():
+        for name, module in self.modules.items():
             if module.enabled:
+                logs.append(f"🔄 Module '{name}': Processing...")
                 state = module.process(state)
+                if name == "memory" and "memory_context" in state:
+                    count = len(state["memory_context"])
+                    logs.append(f"  ↳ Memory Recall: Found {count} relevant items")
         
-        # Invoke agent
         # Invoke agent
         messages = []
         
@@ -85,6 +89,8 @@ class ObsidianAgent:
             
         messages.append({"role": "user", "content": question})
         
+        logs.append(f"🤖 Agent: Generating response with {len(messages)} context messages")
+        
         response = self.agent.invoke({
             "messages": messages
         })
@@ -93,7 +99,12 @@ class ObsidianAgent:
         
         # Update memory
         if "memory" in self.modules and self.modules["memory"].enabled:
+            logs.append("💾 Memory: Updating knowledge graph")
             self.modules["memory"].update(question, answer)
             
         logger.info(f"Answer generated ({len(answer)} chars)")
-        return answer
+        
+        return {
+            "answer": answer,
+            "logs": logs
+        }

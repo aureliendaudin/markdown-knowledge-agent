@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obsidian Knowledge Agent</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧠 Knowledge Agent</h1>
+            <div id="status" class="status-indicator connecting">Connecting...</div>
+        </header>
+        
+        <div class="main-content">
+            <div id="chat-history" class="chat-history">
+                <div class="message system">
+                    <div class="content">Hello! I am your Obsidian Knowledge Agent. Ask me anything about your notes.</div>
+                </div>
+            </div>
+            
+            <div id="logs-panel" class="logs-panel">
+                <div class="logs-header">
+                    <h3>Execution Logs</h3>
+                </div>
+                <div id="logs-content" class="logs-content">
+                    <div class="log-entry info">System ready...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="input-area">
+            <textarea id="user-input" placeholder="Type your question here..." rows="1"></textarea>
+            <button id="send-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
