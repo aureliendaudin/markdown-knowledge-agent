@@ -59,7 +59,7 @@ def search_notes(keyword: str) -> str:
 
 
 @tool
-def read_note(file_path: str, max_lines: int = None) -> str:
+def read_note(file_path: str, max_lines: int | None = None) -> str:
     """Read content of a markdown note."""
     if max_lines is None:
         max_lines = settings.modules.retrieval.max_file_lines

@@ -53,9 +53,19 @@ class RetrievalModuleConfig(BaseModel):
     # TODO: Add more retrieval settings in future
 
 
+class PlanningModuleConfig(BaseModel):
+    """Planning module configuration (Planner-Executor pattern)."""
+    enabled: bool = False  # Disabled by default
+    max_subtasks: int = 10
+    max_retries_per_task: int = 2
+    enable_replanning: bool = True
+    verification_mode: Literal["strict", "flexible"] = "flexible"
+
+
 class ModulesConfig(BaseModel):
     """Modules configuration."""
     retrieval: RetrievalModuleConfig = Field(default_factory=RetrievalModuleConfig)
+    planning: PlanningModuleConfig = Field(default_factory=PlanningModuleConfig)
     # TODO: Add memory and reasoning module configs in future
 
 
