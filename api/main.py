@@ -98,7 +98,6 @@ async def chat(request: ChatRequest):
             logs=logs,
             full_prompt=full_prompt
         )
-        )
     except Exception as e:
         logger.error(f"Error processing request: {e}")
         raise HTTPException(status_code=500, detail=str(e))

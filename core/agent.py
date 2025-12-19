@@ -103,11 +103,11 @@ class ObsidianAgent:
             # Skip planning module here as it's handled separately above
             if name == "planning":
                 continue
-
             # Check if module is enabled globally AND in this request
             is_enabled = module.enabled
             if active_modules and name in active_modules:
                 is_enabled = active_modules[name]
+
                 
             if is_enabled:
                 logs.append(f"🔄 Module '{name}': Processing...")

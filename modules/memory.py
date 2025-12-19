@@ -13,6 +13,7 @@ try:
 except ImportError:
     HAS_VECTOR_MEMORY = False
     logger.warning("sentence-transformers or faiss not found. Vector memory disabled.")
+
 logger = logging.getLogger(__name__)
 
 
@@ -254,6 +255,7 @@ class MemoryModule(BaseModule):
         self._update_user_context(question)
         
         # Trim history if needed
+        if len(self.history) > self.max_history * 2:
             # For vector store, trimming is hard without rebuilding.
             # For now, we just trim the list and accept indices might drift in vector store
             # (In production, use a proper VectorDB with IDs)
@@ -300,3 +302,4 @@ class MemoryModule(BaseModule):
         self.user_context = {}
         if self.vector_index:
             self.vector_index.reset()
+

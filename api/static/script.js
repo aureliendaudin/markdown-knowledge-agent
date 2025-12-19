@@ -67,14 +67,12 @@ tabBtns.forEach(btn => {
             c.classList.remove('active');
             c.style.display = 'none';
         });
-
         // Add active class to clicked
         btn.classList.add('active');
         const tabId = btn.dataset.tab;
         const content = document.getElementById(`${tabId}-view`);
         content.classList.add('active');
         content.style.display = 'flex';
-
         // If graph tab, render graph
         if (tabId === 'graph') {
             renderGraph();
@@ -91,12 +89,10 @@ async function renderGraph() {
         const response = await fetch('/memory');
         if (!response.ok) return;
         const data = await response.json();
-
         const nodes = [];
         const edges = [];
         const concepts = data.concepts || {};
         const conceptIndex = data.concept_index || {};
-
         // Create Nodes
         Object.keys(concepts).forEach(concept => {
             const info = concepts[concept];
@@ -111,7 +107,6 @@ async function renderGraph() {
                 }
             });
         });
-
         // Create Edges (Co-occurrence)
         // 1. Invert index: message_idx -> [concepts]
         const msgToConcepts = {};
@@ -133,13 +128,11 @@ async function renderGraph() {
                     const c1 = conceptList[i];
                     const c2 = conceptList[j];
                     const id = [c1, c2].sort().join('-');
-
                     if (!edgeMap[id]) edgeMap[id] = 0;
                     edgeMap[id]++;
                 }
             }
         });
-
         Object.keys(edgeMap).forEach(id => {
             const [from, to] = id.split('-');
             edges.push({
@@ -149,7 +142,6 @@ async function renderGraph() {
                 color: { color: '#cbd5e1' }
             });
         });
-
         // Render
         const container = document.getElementById('mynetwork');
         const graphData = {
@@ -173,13 +165,11 @@ async function renderGraph() {
                 }
             }
         };
-
         if (network) {
             network.setData(graphData);
         } else {
             network = new vis.Network(container, graphData, options);
         }
-
     } catch (error) {
         console.error("Error rendering graph:", error);
     }
@@ -200,7 +190,6 @@ async function checkHealth() {
             isConnected = true;
             statusIndicator.textContent = 'Connected';
             statusIndicator.className = 'status-indicator connected';
-
             // Initialize modules list if empty
             if (modulesList.children.length === 0) {
                 renderModules(data.modules_active);
@@ -237,12 +226,10 @@ function renderModules(modules) {
         checkbox.type = 'checkbox';
         checkbox.id = `mod-${moduleName}`;
         checkbox.checked = true;
-
         checkbox.addEventListener('change', (e) => {
             activeModules[moduleName] = e.target.checked;
             addLog(`Module '${moduleName}' ${e.target.checked ? 'enabled' : 'disabled'}`, 'info');
         });
-
         item.appendChild(label);
         item.appendChild(checkbox);
         modulesList.appendChild(item);
@@ -294,7 +281,6 @@ async function sendMessage() {
         if (response.ok) {
             const data = await response.json();
             addMessage(data.response, 'bot', data.context_used);
-
             // Display logs
             if (data.logs && data.logs.length > 0) {
                 data.logs.forEach(log => addLog(log, 'info'));
@@ -396,4 +382,3 @@ function removeMessage(id) {
     const el = document.getElementById(id);
     if (el) el.remove();
 }
-
