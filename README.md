@@ -60,7 +60,7 @@ level: INFO # DEBUG for verbose output
 
 The planning module implements the Planner-Executor pattern, which decomposes complex queries into structured sub-tasks:
 
-```yaml
+```yaml 
 modules:
   planning:
     enabled: true  # Enable Planner-Executor pattern
