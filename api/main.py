@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from config import settings
 from utils import setup_logging
 from core import ObsidianAgent
-from .models import ChatRequest, ChatResponse, HealthCheck
+from .models import ChatRequest, ChatResponse, HealthCheck, MemoryState
 
 # Setup logging
 setup_logging(settings.logging.level)
@@ -60,6 +60,13 @@ async def health_check():
     active_modules = [name for name, m in agent.modules.items() if m.enabled]
     return HealthCheck(status="healthy", modules_active=active_modules)
 
+@app.get("/memory", response_model=MemoryState)
+async def get_memory():
+    """Get current memory state."""
+    if not agent:
+        raise HTTPException(status_code=503, detail="Agent not initialized")
+    return agent.get_memory_state()
+
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """Chat with the agent."""
@@ -69,18 +76,19 @@ async def chat(request: ChatRequest):
     start_time = time.time()
     
     try:
-        result = agent.ask(request.message)
+        result = agent.ask(request.message, active_modules=request.modules)
         
         # Handle both string (legacy) and dict return types for safety
         if isinstance(result, dict):
             response_text = result["answer"]
             logs = result.get("logs", [])
+            full_prompt = result.get("full_prompt", [])
+            context = result.get("memory_context", [])
         else:
             response_text = result
             logs = []
-        
-        # Get context if available (from memory module)
-        context = []
+            full_prompt = []
+            context = []
             
         processing_time = time.time() - start_time
         
@@ -88,7 +96,8 @@ async def chat(request: ChatRequest):
             response=response_text,
             context_used=context,
             processing_time=processing_time,
-            logs=logs
+            logs=logs,
+            full_prompt=full_prompt
         )
     except Exception as e:
         logger.error(f"Error processing request: {e}")

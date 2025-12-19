@@ -55,28 +55,42 @@ class ObsidianAgent:
     
     def _create_agent(self):
         """Create LangChain agent."""
-        system_prompt = self.modules["retrieval"].get_system_prompt()
+        self.system_prompt = self.modules["retrieval"].get_system_prompt()
         
         return create_agent(
             model=self.model,
             tools=self.tools,
-            system_prompt=system_prompt
+            system_prompt=self.system_prompt
         )
     
-    def ask(self, question: str) -> dict[str, Any]:
-        """Ask a question to the agent."""
+    def ask(self, question: str, active_modules: dict[str, bool] | None = None) -> dict[str, Any]:
+        """
+        Ask a question to the agent.
+        
+        Args:
+            question: The user's question
+            active_modules: Optional dictionary to override module enabled state
+                          e.g. {"memory": False, "retrieval": True}
+        """
         logger.info(f"Question: {question}")
         logs = []
         
         # Process through modules
         state = {"question": question}
         for name, module in self.modules.items():
-            if module.enabled:
+            # Check if module is enabled globally AND in this request
+            is_enabled = module.enabled
+            if active_modules and name in active_modules:
+                is_enabled = active_modules[name]
+                
+            if is_enabled:
                 logs.append(f"🔄 Module '{name}': Processing...")
                 state = module.process(state)
                 if name == "memory" and "memory_context" in state:
                     count = len(state["memory_context"])
                     logs.append(f"  ↳ Memory Recall: Found {count} relevant items")
+            else:
+                logs.append(f"⏭️ Module '{name}': Skipped (Disabled)")
         
         # Invoke agent
         messages = []
@@ -85,7 +99,13 @@ class ObsidianAgent:
         if "memory_context" in state:
             messages.extend(state["memory_context"])
         elif "memory" in self.modules and self.modules["memory"].enabled:
-            messages.extend(self.modules["memory"].get_history())
+            # Only fallback if memory is actually enabled
+            is_memory_enabled = self.modules["memory"].enabled
+            if active_modules and "memory" in active_modules:
+                is_memory_enabled = active_modules["memory"]
+                
+            if is_memory_enabled:
+                messages.extend(self.modules["memory"].get_history())
             
         messages.append({"role": "user", "content": question})
         
@@ -98,13 +118,43 @@ class ObsidianAgent:
         answer = response["messages"][-1].content
         
         # Update memory
-        if "memory" in self.modules and self.modules["memory"].enabled:
+        is_memory_enabled = False
+        if "memory" in self.modules:
+            is_memory_enabled = self.modules["memory"].enabled
+            if active_modules and "memory" in active_modules:
+                is_memory_enabled = active_modules["memory"]
+                
+        if is_memory_enabled:
             logs.append("💾 Memory: Updating knowledge graph")
             self.modules["memory"].update(question, answer)
             
         logger.info(f"Answer generated ({len(answer)} chars)")
         
+        # Construct full prompt for display (including system prompt)
+        full_prompt_display = []
+        if hasattr(self, 'system_prompt'):
+            full_prompt_display.append({"role": "system", "content": self.system_prompt})
+        full_prompt_display.extend(messages)
+        
         return {
             "answer": answer,
-            "logs": logs
+            "logs": logs,
+            "full_prompt": full_prompt_display,
+            "memory_context": state.get("memory_context", [])
+        }
+
+    def get_memory_state(self) -> dict[str, Any]:
+        """Get current state of memory module."""
+        if "memory" in self.modules and self.modules["memory"].enabled:
+            mem = self.modules["memory"]
+            return {
+                "history": mem.history,
+                "concepts": mem.concepts,
+                "concept_index": getattr(mem, "concept_index", {}),
+                "user_context": mem.user_context
+            }
+        return {
+            "history": [],
+            "concepts": {},
+            "user_context": {}
         }
