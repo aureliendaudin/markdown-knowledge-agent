@@ -75,12 +75,20 @@ class PlanningModuleConfig(BaseModel):
     enable_replanning: bool = True
     verification_mode: Literal["strict", "flexible"] = "flexible"
 
+class ReflectionModuleConfig(BaseModel):
+    """Reflection module configuration."""
+    enabled: bool = False
+    max_iterations: int = 2
+    acceptance_threshold: float = 0.8
+    store_reflections: bool = False
+    reflections_path: str = "reflections.jsonl"
 
 class ModulesConfig(BaseModel):
     """Modules configuration."""
     retrieval: RetrievalModuleConfig = Field(default_factory=RetrievalModuleConfig)
     planning: PlanningModuleConfig = Field(default_factory=PlanningModuleConfig)
     memory: MemoryModuleConfig = Field(default_factory=MemoryModuleConfig)
+    reflection: ReflectionModuleConfig = Field(default_factory=ReflectionModuleConfig)
 
 
 class LogFileConfig(BaseModel):

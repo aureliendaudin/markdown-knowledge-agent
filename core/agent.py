@@ -1,11 +1,11 @@
-"""Core agent implementation."""
+"""Core agent implementation with iterative reflection."""
 import logging
 from typing import Any
 from langchain_ollama import ChatOllama
 from langchain.agents import create_agent
 from config import settings
 from tools import get_all_tools
-from modules import RetrievalModule, PlannerExecutorModule, MemoryModule
+from modules import RetrievalModule, PlannerExecutorModule, MemoryModule, ReflectionModule
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +54,16 @@ class ObsidianAgent:
             modules["memory"] = MemoryModule(
                 config=settings.modules.memory.model_dump()
             )
+        # Reflection module
+        if settings.modules.reflection.enabled:
+            modules["reflection"] = ReflectionModule(
+                config={
+                    "max_iterations": settings.modules.reflection.max_iterations,
+                    "acceptance_threshold": settings.modules.reflection.acceptance_threshold,
+                    "enable_llm_critique": True,  # Enable LLM-based critique
+                    "model": self.model  # Pass model instance for reflection
+                }
+            )
         
         for name, module in modules.items():
             module.initialize()
@@ -90,25 +100,23 @@ class ObsidianAgent:
             if active_modules and "planning" in active_modules:
                 is_planning_enabled = active_modules["planning"]
 
+        planner_output = None
         # If planning module is enabled, use Planner-Executor pattern
         if is_planning_enabled:
             logger.info("Using Planner-Executor mode")
             logs.append("🧠 Strategy: Planner-Executor Mode")
-            state = {"question": question}
-            state = self.modules["planning"].process(state)
-            answer = state.get("answer", "No answer generated")
-            logger.info(f"Answer generated ({len(answer)} chars)")
-            return {
-                "answer": answer,
-                "logs": logs
-            }
+            # Use temporary state for planner
+            planner_state = {"question": question}
+            planner_state = self.modules["planning"].process(planner_state)
+            planner_output = planner_state.get("answer", "")
+            logs.append(f"  ↳ Planner output generated ({len(planner_output)} chars)")
         
-        # Otherwise, use standard workflow
-        logger.info("Using standard mode")
-        state = {"question": question}
+        # Standard workflow
+        logger.info("Processing modules")
+        state = { "question": question, "reflection_iteration": 0 }
         for name, module in self.modules.items():
-            # Skip planning module here as it's handled separately above
-            if name == "planning":
+            # Skip planning and reflection modules here as they are handled separately
+            if name == "planning" or name == "reflection":
                 continue
             # Check if module is enabled globally AND in this request
             is_enabled = module.enabled
@@ -136,17 +144,64 @@ class ObsidianAgent:
             is_memory_enabled = self.modules["memory"].enabled
             if active_modules and "memory" in active_modules:
                 is_memory_enabled = active_modules["memory"]
-                
+
             if is_memory_enabled:
                 messages.extend(self.modules["memory"].get_history())
+
+        # Add planner output if available
+        if planner_output:
+            messages.append({"role": "system", "content": f"Context from Planner/Reasoning:\n{planner_output}"})
+
+        max_iterations = self.modules["reflection"].max_iterations if "reflection" in self.modules else 1
+
+        for iteration in range(max_iterations + 1):
+            # Generate answer (use refinement prompt if available)
+            if iteration == 0:
+                prompt = question
+            else:
+                prompt = state.get("refinement_prompt", question)
+
+            messages.append({"role": "user", "content": prompt})
+            logs.append(f"🤖 Agent: Generating response with {len(messages)} context messages")
             
-        messages.append({"role": "user", "content": question})
-        logs.append(f"🤖 Agent: Generating response with {len(messages)} context messages")
-        response = self.agent.invoke({
-            "messages": messages
-        })
+            response = self.agent.invoke({
+                "messages": messages
+            })
+            answer = response["messages"][-1].content
+            logger.info(f"Answer generated (iteration {iteration}, {len(answer)} chars): {answer}")
+            logs.append(f"🤖 Agent: Generating response at iteration {iteration} with {len(answer)} chars")
+
+            # Store candidate answer
+            state["candidate_answer"] = answer
+            state["reflection_iteration"] = iteration
+            
+            # Phase 3: Run reflection module
+            if "reflection" in self.modules and self.modules["reflection"].enabled:
+                state = self.modules["reflection"].process(state)
+                
+                # Check if refinement is needed
+                if not state.get("refinement_needed", False):
+                    # Answer approved or flagged - we're done
+                    break
+                else:
+                    # Reset refinement flag for next iteration
+                    state["refinement_needed"] = False
+                    logger.info(f"Starting refinement iteration {iteration + 1}")
+                    logs.append(f"🤖 Agent: Starting refinement iteration {iteration + 1}")
+
+            else:
+                # No reflection module - accept answer as-is
+                state["final_answer"] = answer
+                break
         
-        answer = response["messages"][-1].content
+        # Final answer
+        final_answer = state.get("final_answer", answer)
+        
+        # Log reflection stats if available
+        if "reflection_history" in state:
+            scores = [h["score"] for h in state["reflection_history"]]
+            logger.info(f"Reflection summary: iterations={len(scores)}, scores={scores}")
+
         # Update memory
         is_memory_enabled = False
         if "memory" in self.modules:
@@ -156,9 +211,9 @@ class ObsidianAgent:
                 
         if is_memory_enabled:
             logs.append("💾 Memory: Updating knowledge graph")
-            self.modules["memory"].update(question, answer)
+            self.modules["memory"].update(question, final_answer)
             
-        logger.info(f"Answer generated ({len(answer)} chars)")
+        logger.info(f"Answer generated ({len(final_answer)} chars)")
         
         # Construct full prompt for display (including system prompt)
         full_prompt_display = []
@@ -167,7 +222,7 @@ class ObsidianAgent:
         full_prompt_display.extend(messages)
         
         return {
-            "answer": answer,
+            "answer": final_answer,
             "logs": logs,
             "full_prompt": full_prompt_display,
             "memory_context": state.get("memory_context", [])
