@@ -1,4 +1,4 @@
-"""Core agent implementation."""
+"""Core agent implementation with iterative reflection."""
 import logging
 from typing import Any
 from langchain_ollama import ChatOllama
@@ -6,6 +6,7 @@ from langchain.agents import create_agent
 from config import settings
 from tools import get_all_tools
 from modules import RetrievalModule
+from modules.reflection import ReflectionModule
 
 logger = logging.getLogger(__name__)
 
@@ -41,12 +42,16 @@ class ObsidianAgent:
             modules["retrieval"] = RetrievalModule(
                 config=settings.modules.retrieval.model_dump()
             )
-        
-        # Future modules
-        # if settings.modules.memory.enabled:
-        #     modules["memory"] = MemoryModule(
-        #         config=settings.modules.memory.model_dump()
-        #     )
+
+        if settings.modules.reflection.enabled:
+            modules["reflection"] = ReflectionModule(
+                config={
+                    "max_iterations": settings.modules.reflection.max_iterations,
+                    "acceptance_threshold": settings.modules.reflection.acceptance_threshold,
+                    "enable_llm_critique": True,  # Enable LLM-based critique
+                    "model": self.model  # Pass model instance for reflection
+                }
+            )
         
         for name, module in modules.items():
             module.initialize()
@@ -68,18 +73,61 @@ class ObsidianAgent:
         """Ask a question to the agent."""
         logger.info(f"Question: {question}")
         
-        # Process through modules
-        state = {"question": question}
-        for module in self.modules.values():
-            if module.enabled:
+        # Initialize state
+        state = {
+            "question": question,
+            "reflection_iteration": 0
+        }
+        
+        # Phase 1: Pre-agent modules (retrieval)
+        for name, module in self.modules.items():
+            if module.enabled and module.__class__.__name__ != "ReflectionModule":
                 state = module.process(state)
+                logger.debug(f"Module {name} processed state")
         
-        # Invoke agent
-        response = self.agent.invoke({
-            "messages": [{"role": "user", "content": question}]
-        })
+        # Phase 2: Iterative generation + reflection loop
+        max_iterations = self.modules["reflection"].max_iterations if "reflection" in self.modules else 1
         
-        answer = response["messages"][-1].content
-        logger.info(f"Answer generated ({len(answer)} chars)")
+        for iteration in range(max_iterations + 1):
+            # Generate answer (use refinement prompt if available)
+            if iteration == 0:
+                prompt = question
+            else:
+                prompt = state.get("refinement_prompt", question)
+            
+            response = self.agent.invoke({
+                "messages": [{"role": "user", "content": prompt}]
+            })
+            answer = response["messages"][-1].content
+            logger.info(f"Answer generated (iteration {iteration}, {len(answer)} chars)")
+            
+            # Store candidate answer
+            state["candidate_answer"] = answer
+            state["reflection_iteration"] = iteration
+            
+            # Phase 3: Run reflection module
+            if "reflection" in self.modules and self.modules["reflection"].enabled:
+                state = self.modules["reflection"].process(state)
+                
+                # Check if refinement is needed
+                if not state.get("refinement_needed", False):
+                    # Answer approved or flagged - we're done
+                    break
+                else:
+                    # Reset refinement flag for next iteration
+                    state["refinement_needed"] = False
+                    logger.info(f"Starting refinement iteration {iteration + 1}")
+            else:
+                # No reflection module - accept answer as-is
+                state["final_answer"] = answer
+                break
         
-        return answer
+        # Return final answer
+        final_answer = state.get("final_answer", answer)
+        
+        # Log reflection stats if available
+        if "reflection_history" in state:
+            scores = [h["score"] for h in state["reflection_history"]]
+            logger.info(f"Reflection summary: iterations={len(scores)}, scores={scores}")
+        
+        return final_answer

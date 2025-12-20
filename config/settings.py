@@ -56,6 +56,15 @@ class RetrievalModuleConfig(BaseModel):
 class ModulesConfig(BaseModel):
     """Modules configuration."""
     retrieval: RetrievalModuleConfig = Field(default_factory=RetrievalModuleConfig)
+    # Reflection module configuration (simple)
+    class ReflectionModuleConfig(BaseModel):
+        enabled: bool = False
+        max_iterations: int = 2
+        acceptance_threshold: float = 0.8
+        store_reflections: bool = False
+        reflections_path: str = "reflections.jsonl"
+
+    reflection: ReflectionModuleConfig = Field(default_factory=ReflectionModuleConfig)
     # TODO: Add memory and reasoning module configs in future
 
 
