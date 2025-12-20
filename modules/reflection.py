@@ -272,14 +272,14 @@ Génère une réponse améliorée qui :
         """Format an answer that didn't meet quality standards."""
         issues_text = "\n".join(f"• {issue}" for issue in evaluation.get("issues", []))
         
-        return f"""Réponse non vérifiée (score: {evaluation['overall_score']:.2f})
+        return f"""\nRéponse non vérifiée (score: {evaluation['overall_score']:.2f})
 
 {candidate}
 
 ---
-**Note :** Cette réponse n'a pas atteint le seuil de qualité requis.
+Note : Cette réponse n'a pas atteint le seuil de qualité requis.
 
-**Problèmes identifiés :**
+Problèmes identifiés :
 {issues_text}
 
 Veuillez vérifier manuellement les sources ou reformuler votre question."""
