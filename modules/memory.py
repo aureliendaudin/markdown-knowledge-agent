@@ -70,8 +70,6 @@ class MemoryModule(BaseModule):
     def process(self, state: dict[str, Any]) -> dict[str, Any]:
         """
         Process state to add memory context.
-        """
-        Process state to add memory context.
         Executes the Active Recall phase.
         """
         question = state.get("question", "")
