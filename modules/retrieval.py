@@ -45,13 +45,6 @@ IMPORTANT: Utilise TOUJOURS les outils disponibles pour répondre:
 - read_note(file_path) pour lire un fichier
 - grep_content(search_term, folder) pour chercher du texte
 
-Structure du vault:
-- School/Notes/AI/: cours ML, DNN, NLP, PyTorch, GenAI
-- Oncology/: projets medical imaging (ovarian/, pancreas/, uterus/)
-- Reading/: articles, books, newsletters
-- Cuisine/: recettes (dessert/, plat/, sauce/)
-- Contacts/: contacts professionnels
-
 Commence TOUJOURS par appeler un outil avant de répondre."""
     
     def get_system_prompt(self) -> str:
