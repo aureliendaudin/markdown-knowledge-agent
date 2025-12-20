@@ -142,6 +142,28 @@ class Planner:
    - Exemple: read_note(file_path="TODO.md", max_lines=100)
    - ⚠️  TOUJOURS spécifier max_lines (jamais None ou null)
 
+5. `get_document_structure(file_path)`: Voir la structure (titres) d'un fichier
+   - Paramètres: file_path (string, obligatoire)
+   - Utiliser pour: Comprendre l'organisation d'un long document avant de lire une section
+   - Exemple: get_document_structure("Notes/AI.md")
+
+6. `read_section(file_path, section_title, max_lines)`: Lire UNE SECTION spécifique
+   - Paramètres: 
+     * file_path (string, obligatoire)
+     * section_title (string, obligatoire) - Titre exact ou partiel du header
+     * max_lines (int, obligatoire, défaut=50)
+   - Utiliser pour: Lire juste ce qui est nécessaire sans charger tout le fichier
+   - Exemple: read_section("AI.md", "Introduction", 50)
+
+7. `get_headers_with_preview(file_path, preview_lines)`: Aperçu du contenu
+   - Paramètres: file_path (string), preview_lines (int, recommandé 2-5)
+   - Utiliser pour: Scanner rapidement le contenu d'un fichier
+
+8. `search_in_headers(keyword, folder)`: Chercher dans les TITRES seulement
+   - Paramètres: keyword (string), folder (string, optionnel)
+   - Utiliser pour: Trouver des concepts spécifiques mentionnés dans les titres
+
+
 **Format JSON requis**:
 {
   "goal": "Description de l'objectif global",
@@ -217,6 +239,37 @@ Question: "Trouve mes notes sur PyTorch et résume-les"
       "parameters": {},
       "expected_outcome": "Résumé synthétique",
       "dependencies": [2]
+    }
+  ]
+}
+
+Question: "Que dit le cours de ML sur les arbres de décision ?"
+{
+  "goal": "Trouver la section sur les arbres de décision dans le cours de ML et en extraire le contenu",
+  "subtasks": [
+    {
+      "id": 1,
+      "description": "Trouver le fichier du cours de ML",
+      "tool": "search_notes",
+      "parameters": {"keyword": "Machine Learning"},
+      "expected_outcome": "Chemin du fichier (ex: Notes/ML.md)",
+      "dependencies": []
+    },
+    {
+      "id": 2,
+      "description": "Analyser la structure du document pour trouver la section",
+      "tool": "get_document_structure",
+      "parameters": {"file_path": "from_task_1"},
+      "expected_outcome": "Structure du document avec les titres",
+      "dependencies": [1]
+    },
+    {
+      "id": 3,
+      "description": "Lire la section spécifique sur les arbres de décision",
+      "tool": "read_section",
+      "parameters": {"file_path": "from_task_1", "section_title": "Decision Trees", "max_lines": 50},
+      "expected_outcome": "Contenu de la section",
+      "dependencies": [1]
     }
   ]
 }
