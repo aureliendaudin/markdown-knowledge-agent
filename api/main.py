@@ -11,7 +11,7 @@ from core import ObsidianAgent
 from .models import ChatRequest, ChatResponse, HealthCheck, MemoryState
 
 # Setup logging
-setup_logging(settings.logging.level)
+setup_logging(settings.logging.level) 
 logger = logging.getLogger("api")
 
 # Global agent instance
