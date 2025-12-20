@@ -50,22 +50,45 @@ class RetrievalModuleConfig(BaseModel):
     max_file_lines: int = 80
     search_depth: str | int = "unlimited"
 
-    # TODO: Add more retrieval settings in future
 
+class MemoryModuleConfig(BaseModel):
+    """Memory module configuration."""
+    enabled: bool = True
+    max_history: int = 10
+    strategy: Literal["buffer", "summary"] = "buffer"
+
+
+class PlanningModuleConfig(BaseModel):
+    """Planning module configuration (Planner-Executor pattern)."""
+    enabled: bool = False  # Disabled by default
+    max_subtasks: int = 10
+    max_retries_per_task: int = 2
+    enable_replanning: bool = True
+    verification_mode: Literal["strict", "flexible"] = "flexible"
+
+
+class PlanningModuleConfig(BaseModel):
+    """Planning module configuration (Planner-Executor pattern)."""
+    enabled: bool = False  # Disabled by default
+    max_subtasks: int = 10
+    max_retries_per_task: int = 2
+    enable_replanning: bool = True
+    verification_mode: Literal["strict", "flexible"] = "flexible"
+
+class ReflectionModuleConfig(BaseModel):
+    """Reflection module configuration."""
+    enabled: bool = False
+    max_iterations: int = 2
+    acceptance_threshold: float = 0.8
+    store_reflections: bool = False
+    reflections_path: str = "reflections.jsonl"
 
 class ModulesConfig(BaseModel):
     """Modules configuration."""
     retrieval: RetrievalModuleConfig = Field(default_factory=RetrievalModuleConfig)
-    # Reflection module configuration (simple)
-    class ReflectionModuleConfig(BaseModel):
-        enabled: bool = False
-        max_iterations: int = 2
-        acceptance_threshold: float = 0.8
-        store_reflections: bool = False
-        reflections_path: str = "reflections.jsonl"
-
+    planning: PlanningModuleConfig = Field(default_factory=PlanningModuleConfig)
+    memory: MemoryModuleConfig = Field(default_factory=MemoryModuleConfig)
     reflection: ReflectionModuleConfig = Field(default_factory=ReflectionModuleConfig)
-    # TODO: Add memory and reasoning module configs in future
 
 
 class LogFileConfig(BaseModel):

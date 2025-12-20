@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obsidian Knowledge Agent</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🧠 Knowledge Agent</h1>
+            <div class="nav-tabs">
+                <button class="tab-btn active" data-tab="chat">Chat</button>
+                <button class="tab-btn" data-tab="graph">Knowledge Graph</button>
+            </div>
+            <div class="header-controls">
+                <button id="toggle-sidebar" class="icon-btn" title="Toggle Benchmark Panel">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="18" y="3" width="4" height="18"></rect>
+                        <line x1="10" y1="8" x2="2" y2="8"></line>
+                        <line x1="10" y1="16" x2="2" y2="16"></line>
+                    </svg>
+                </button>
+                <div id="status" class="status-indicator connecting">Connecting...</div>
+            </div>
+        </header>
+        <div id="chat-view" class="main-content tab-content active">
+            <div id="chat-history" class="chat-history">
+                <div class="message system">
+                    <div class="content">Hello! I am your Obsidian Knowledge Agent. Ask me anything about your notes.
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div id="modules-panel" class="modules-panel">
+                    <div class="panel-header">
+                        <h3>Active Modules</h3>
+                    </div>
+                    <div id="modules-list" class="modules-list">
+                        <!-- Modules will be injected here -->
+                    </div>
+                </div>
+
+                <div id="logs-panel" class="logs-panel">
+                    <div class="panel-header">
+                        <h3>Execution Logs</h3>
+                    </div>
+                    <div id="logs-content" class="logs-content">
+                        <div class="log-entry info">System ready...</div>
+                    </div>
+                </div>
+        </div>
+    </div>
+
+    <div id="graph-view" class="main-content tab-content" style="display: none;">
+        <div class="internals-container" style="height: 100%; padding: 0;">
+            <div id="mynetwork" style="width: 100%; height: 100%; background-color: #f8fafc;"></div>
+            <div class="graph-controls">
+                <button id="refresh-graph" class="icon-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 4v6h-6"></path>
+                        <path d="M1 20v-6h6"></path>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="input-area">
+        <textarea id="user-input" placeholder="Type your question here..." rows="1"></textarea>
+        <button id="send-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+        </button>
+    </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>

@@ -14,10 +14,10 @@ Download a model for tool calling
 ollama pull qwen2.5:3b
 ```
 
-Install Python packages
+Install Python packages using uv
 
 ```
-pip install -r requirements.txt
+uv sync
 ```
 
 ## Configuration
@@ -50,24 +50,44 @@ level: INFO # DEBUG for verbose output
 - **vault**: Obsidian vault location and indexing options
 - **model**: LLM provider and model settings
 - **agent**: Agent behavior (iterations, timeout)
-- **modules**: Enable/disable modules (retrieval, memory, reasoning)
+- **modules**: Enable/disable modules (retrieval, planning, memory, reasoning)
+  - **retrieval**: Documentary search and retrieval
+  - **planning**: Planner-Executor pattern for complex query decomposition
 - **logging**: Log level and output configuration
 - **tools**: Tool-specific parameters
+
+#### Planning Module (Optional)
+
+The planning module implements the Planner-Executor pattern, which decomposes complex queries into structured sub-tasks:
+
+```yaml 
+modules:
+  planning:
+    enabled: true  # Enable Planner-Executor pattern
+    max_subtasks: 10
+    max_retries_per_task: 2
+    verification_mode: flexible  # or 'strict'
+```
+
+**Benefits:**
+- Better traceability of agent decisions
+- Improved error handling and retry logic
+- Easier debugging with structured execution plans
 
 See `config.yaml.example` for all available options with comments.
 
 
 ## Run
 ```
-python main.py
+uv run python main.py
 ```
 
 ## Roadmap
 
 - [x] Documentary retrieval module
+- [x] Query planning module (Planner-Executor pattern)
 - [ ] Short/long-term memory module
 - [ ] Reasoning & reflection module
-- [ ] Query planning module
 - [ ] Multi-document synthesis
 
 ## Contributing
