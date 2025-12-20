@@ -5,6 +5,8 @@ from typing import Any, List, Dict, Set
 import numpy as np
 from .base import BaseModule
 
+logger = logging.getLogger(__name__)
+
 # Optional imports for advanced memory
 try:
     from sentence_transformers import SentenceTransformer
@@ -13,8 +15,6 @@ try:
 except ImportError:
     HAS_VECTOR_MEMORY = False
     logger.warning("sentence-transformers or faiss not found. Vector memory disabled.")
-
-logger = logging.getLogger(__name__)
 
 
 class MemoryModule(BaseModule):

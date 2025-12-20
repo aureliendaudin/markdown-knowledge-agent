@@ -83,8 +83,15 @@ class ObsidianAgent:
         logger.info(f"Question: {question}")
         logs = []
         
-        # If planning module is enabled, use Planner-Executor pattern
+        # Determine if planning is enabled for this request
+        is_planning_enabled = False
         if "planning" in self.modules and self.modules["planning"].enabled:
+            is_planning_enabled = True
+            if active_modules and "planning" in active_modules:
+                is_planning_enabled = active_modules["planning"]
+
+        # If planning module is enabled, use Planner-Executor pattern
+        if is_planning_enabled:
             logger.info("Using Planner-Executor mode")
             logs.append("🧠 Strategy: Planner-Executor Mode")
             state = {"question": question}
