@@ -99,7 +99,7 @@ class ObsidianAgent:
                 "messages": [{"role": "user", "content": prompt}]
             })
             answer = response["messages"][-1].content
-            logger.info(f"Answer generated (iteration {iteration}, {len(answer)} chars)")
+            logger.info(f"Answer generated (iteration {iteration}, {len(answer)} chars): {answer}")
             
             # Store candidate answer
             state["candidate_answer"] = answer
