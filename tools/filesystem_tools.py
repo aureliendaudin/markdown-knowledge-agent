@@ -1,5 +1,6 @@
 """Filesystem tools for Obsidian vault navigation."""
 import logging
+import re
 from pathlib import Path
 from langchain_core.tools import tool
 from config import settings
@@ -59,12 +60,25 @@ def search_notes(keyword: str) -> str:
 
 
 @tool
-def read_note(file_path: str, max_lines: int | None = None) -> str:
-    """Read content of a markdown note."""
+def read_note(file_path: str, max_lines: int = None, mode: str = "full") -> str:
+    """
+    Read content of a markdown note with different reading modes.
+    
+    Args:
+        file_path: Relative path to file
+        max_lines: Maximum lines to return (None for all)
+        mode: Reading mode:
+            - "full": Read complete content (default)
+            - "structure": Read only headers (H1-H3)
+            - "summary": Read headers with 2 lines preview each
+    
+    Returns:
+        File content according to selected mode
+    """
     if max_lines is None:
         max_lines = settings.modules.retrieval.max_file_lines
     
-    logger.info(f"[TOOL] read_note('{file_path}', max_lines={max_lines})")
+    logger.info(f"[TOOL] read_note('{file_path}', max_lines={max_lines}, mode='{mode}')")
     
     full_path = settings.vault.path / file_path
     
@@ -72,14 +86,45 @@ def read_note(file_path: str, max_lines: int | None = None) -> str:
         return f"File not found: {file_path}"
     
     try:
-        lines = full_path.read_text(encoding='utf-8').split('\n')
-        content = '\n'.join(lines[:max_lines])
+        content = full_path.read_text(encoding='utf-8')
+        lines = content.split('\n')
+        
+        if mode == "structure":
+            # Extract only headers
+            header_lines = [
+                line for line in lines 
+                if re.match(r'^#{1,3}\s+.+', line)
+            ]
+            result = '\n'.join(header_lines[:max_lines])
+            
+        elif mode == "summary":
+            # Headers with preview
+            result_lines = []
+            i = 0
+            while i < len(lines) and len(result_lines) < max_lines:
+                if re.match(r'^#{1,3}\s+.+', lines[i]):
+                    result_lines.append(lines[i])
+                    # Add next 2 non-empty lines
+                    preview_count = 0
+                    for j in range(i+1, min(i+10, len(lines))):
+                        if lines[j].strip():
+                            result_lines.append(lines[j])
+                            preview_count += 1
+                            if preview_count >= 2:
+                                break
+                    result_lines.append("")
+                i += 1
+            result = '\n'.join(result_lines)
+            
+        else:  # mode == "full"
+            result = '\n'.join(lines[:max_lines])
         
         if len(lines) > max_lines:
-            content += f"\n\n[{len(lines) - max_lines} more lines...]"
+            result += f"\n\n[{len(lines) - max_lines} more lines...]"
         
-        logger.debug(f"  Read {len(lines)} lines (showing {min(len(lines), max_lines)})")
-        return content
+        logger.debug(f"  Read {len(lines)} lines (mode: {mode}, showing {min(len(lines), max_lines)})")
+        return result
+        
     except Exception as e:
         logger.error(f"  Error reading file: {e}")
         return f"Error reading file: {e}"
