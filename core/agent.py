@@ -100,21 +100,19 @@ class ObsidianAgent:
             if active_modules and "planning" in active_modules:
                 is_planning_enabled = active_modules["planning"]
 
+        planner_output = None
         # If planning module is enabled, use Planner-Executor pattern
         if is_planning_enabled:
             logger.info("Using Planner-Executor mode")
             logs.append("🧠 Strategy: Planner-Executor Mode")
-            state = {"question": question}
-            state = self.modules["planning"].process(state)
-            answer = state.get("answer", "No answer generated")
-            logger.info(f"Answer generated ({len(answer)} chars)")
-            return {
-                "answer": answer,
-                "logs": logs
-            }
+            # Use temporary state for planner
+            planner_state = {"question": question}
+            planner_state = self.modules["planning"].process(planner_state)
+            planner_output = planner_state.get("answer", "")
+            logs.append(f"  ↳ Planner output generated ({len(planner_output)} chars)")
         
-        # Otherwise, use standard workflow
-        logger.info("Using standard mode")
+        # Standard workflow
+        logger.info("Processing modules")
         state = { "question": question, "reflection_iteration": 0 }
         for name, module in self.modules.items():
             # Skip planning and reflection modules here as they are handled separately
@@ -150,6 +148,10 @@ class ObsidianAgent:
             if is_memory_enabled:
                 messages.extend(self.modules["memory"].get_history())
 
+        # Add planner output if available
+        if planner_output:
+            messages.append({"role": "system", "content": f"Context from Planner/Reasoning:\n{planner_output}"})
+
         max_iterations = self.modules["reflection"].max_iterations if "reflection" in self.modules else 1
 
         for iteration in range(max_iterations + 1):
@@ -167,6 +169,7 @@ class ObsidianAgent:
             })
             answer = response["messages"][-1].content
             logger.info(f"Answer generated (iteration {iteration}, {len(answer)} chars): {answer}")
+            logs.append(f"🤖 Agent: Generating response at iteration {iteration} with {len(answer)} chars")
 
             # Store candidate answer
             state["candidate_answer"] = answer
@@ -184,6 +187,8 @@ class ObsidianAgent:
                     # Reset refinement flag for next iteration
                     state["refinement_needed"] = False
                     logger.info(f"Starting refinement iteration {iteration + 1}")
+                    logs.append(f"🤖 Agent: Starting refinement iteration {iteration + 1}")
+
             else:
                 # No reflection module - accept answer as-is
                 state["final_answer"] = answer
